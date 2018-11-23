@@ -1,0 +1,415 @@
+
+
+# Beginning TypeScript
+
+—— ZHAO Jinxiang
+
+---
+
+## JavaScript's basic grammar
+
+
+```typescript
+const foo = 'foo';
+const bar = { a: 1 + 2 + '123'};
+const baz = [1,'2',{spam:'spam'},...[1,2,3]];
+const qux = {...{a:'a'}, ...foo.startsWith('f')?{}:{y:'y'}};
+```
+
+---
+
+## Promise & Async function
+
+```typescript
+const sleep = (timeout,val) => new Promise((resolve,reject)=>{
+  setTimeout(() => {
+    resolve(val);
+  }, timeout);
+})
+
+const app = async () => {
+  const ret = await sleep(1000,'hello world');
+  console.log(ret);
+}
+app();
+```
+
+---
+
+## Range —— (Imperative programming)
+
+```typescript
+const arr = [];
+
+for(let i = 0; i < 20; i++){
+  arr.push(i);
+}
+```
+
+---
+
+## Range —— (Functional programming)
+
+```typescript
+const arr = Array.from({length:20}).map((x,i)=>i);
+
+const arr2 = Array(20).fill().map((x,i)=>i);
+
+const arr3 = range(0, 20); // Ramda
+```
+
+---
+## Factorial       
+
+```typescript
+const fact = x => x === 0 ? 1 : x * fact(x - 1)
+```
+
+---
+
+## Factorial       
+
+```typescript
+const fact = x => range(1,x+1).reduce((x,y)=>x*y,1);
+```
+
+---
+
+## Primitive Types & Literal Types
+
+```typescript
+const a = 'foo';
+const a:'foo' = 'foo';
+
+let a = 'foo';
+let a:string = 'foo';
+
+const a = null;
+const a = undefined;
+const a = 3.14;
+
+```
+
+---
+
+## Object Types
+
+```typescript
+const obj2: {
+  foo: number,
+  bar: boolean,
+  baz: string,
+} = {
+  foo: 1,
+  bar: true,
+  baz: 'three',
+};
+```
+
+---
+
+## Object Types -- typeof
+
+```typescript
+const sampleData = [{
+  foo: 1,
+  bar: true,
+  baz: 'three',
+}];
+
+type sampleData = typeof sampleData
+
+```
+
+---
+
+## Object Types -- as
+
+```typescript
+const sampleData = [{
+  foo: 1,
+  bar: true,
+  baz: 'three' as 'one' | 'two' | 'three',
+}];
+
+type sampleData = typeof sampleData
+
+```
+
+---
+
+## Object Types -- Index types
+
+```typescript
+type foo = {
+    [key: string]: number;
+}
+```
+
+---
+## Object Types -- Mapped types
+
+```typescript
+interface Person{
+    name: string;
+    age: number;
+}
+type MyPartial<T> = {
+    [P in keyof T]?: T[P];
+}
+type PersonPartial = MyPartial<Person>
+```
+
+---
+
+## Function Types 
+
+```typescript
+function concat(a: string, b: string): string {
+  return a + b;
+}
+```
+
+```typescript
+const concat:(a: string, b: string) => string = (a,b) => {
+  return a + b;
+}
+```
+
+---
+
+## Function Types —— Overloads
+
+```typescript
+function concat(a:string, b:string):string;
+function concat(a:number, b:number):number;
+function concat(a: any, b: any): any {
+  return typeof a === 'number' ? a + b : `${a}, ${b}`;
+}
+```
+
+---
+
+## Function Type —— Generics
+
+```typescript
+function identity<T>(arg: T): T {
+    return arg;
+}
+const c = identity(1);
+```
+
+---
+
+## Tuple & Rest Params
+
+```typescript
+function tuple<t extends any[]>(...xs:t){
+  return xs
+}
+const foobar = [{a:1},()=>'foo'+'1']
+const bazqux = tuple({a:1},()=>'foo'+'1')
+```
+
+---
+
+## Union Types
+
+```typescript
+function toStringPrimitives(value: number | boolean | string) {
+  return String(value);
+}
+
+toStringPrimitives(1);       // Works!
+toStringPrimitives(true);    // Works!
+toStringPrimitives('three'); // Works!
+
+// $ExpectError
+toStringPrimitives({ prop: 'val' }); // Error!
+// $ExpectError
+toStringPrimitives([1, 2, 3, 4, 5]); // Error!
+```
+
+---
+
+## Unions & Refinements
+
+```typescript
+function toStringPrimitives(value: number | boolean | string) {
+  if (typeof value === 'number') {
+    return value.toLocaleString([], { maximumSignificantDigits: 3 }); // Works!
+  }
+  // ...
+}
+```
+
+---
+
+## Disjoint Unions
+
+Tagged Union
+
+### Problem
+
+```typescript
+{ success: true, value: [{id:1,score:2},{id:2,score:22},] };
+```
+
+```typescript
+{ success: false, error: 'Bad request' };
+```
+
+---
+
+## Disjoint Unions
+
+### 2B 程序员
+
+```typescript
+type Response = any;
+```
+
+---
+
+### 普通程序员
+
+```typescript
+type Response = {
+  success: boolean,
+  value?: Array<{id:number,score:number}>,
+  error?: string
+};
+
+function handleResponse(response: Response) {
+  if (response.success) {
+    // $ExpectError
+    var value: boolean = response.value; // Error!
+  } else {
+    // $ExpectError
+    var error: string = response.error; // Error!
+  }
+}
+```
+
+---
+
+## Disjoint Unions
+
+### 正常的 TypeScript 程序员
+
+```typescript
+type Success = { success: true, value: Array<{id:number,score:number}> };
+type Failed  = { success: false, message: string };
+type Response = Success | Failed
+function handleResponse(response: Response ) {
+  if(response.success){
+    // ...
+  }
+}
+```
+
+---
+
+## Disjoint Unions
+
+### 偷懒的 TypeScript 程序员
+
+```typescript
+type TheResponse = 
+  | { success: true, value: Array<{id:number,score:number}> }
+  | { success: false, message: string };
+function handleResponse(response: TheResponse ) {
+  if(response.success){
+    // ...
+  }
+}
+```
+
+---
+
+## Intersection Types
+
+```typescript
+
+type One = { foo: number };
+type Two = { bar: boolean };
+
+type Both = One & Two;
+
+var value: Both = {
+  foo: 1,
+  bar: true
+};
+```
+
+---
+
+## Type Guards
+
+### Problem 1
+
+```typescript
+interface Bird {
+    fly();
+    layEggs();
+}
+
+interface Fish {
+    swim();
+    layEggs();
+}
+
+function getSmallPet(): Fish | Bird {
+    // ...
+}
+
+let pet = getSmallPet();
+pet.layEggs(); // okay
+pet.swim();    // errors
+```
+
+
+---
+
+## Type Guards
+
+### Problem 2
+
+```typescript
+let pet = getSmallPet();
+
+// Each of these property accesses will cause an error
+if (pet.swim) {
+    pet.swim();
+}
+else if (pet.fly) {
+    pet.fly();
+}
+```
+
+---
+
+## Type Guards
+
+### User-Defined Type Guards
+
+```typescript
+
+interface Bird { fly(); layEggs(); }
+
+interface Fish { swim(); layEggs(); }
+function isFish(pet: Fish | Bird): pet is Fish {
+    return (<Fish>pet).swim !== undefined;
+}
+
+declare const pet: Fish | Bird
+
+if (isFish(pet)) {
+    pet.swim();
+}
+else {
+    pet.fly();
+}
+```
+
+
